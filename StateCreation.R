@@ -4,11 +4,11 @@
 
 rm(list=ls())
 
-setwd('~/Desktop/Research/BuildingPanelData')
+setwd('~/Research/bpd')
 require(cshapes)
 require(countrycode)
 
-years <- seq(1960,2012,1)
+years <- seq(1960,2016,1)
 date <- paste(years, '-12-31', sep='')
 
 # Constructing data with GW and COW codes
@@ -17,8 +17,8 @@ vars <- c('CNTRY_NAME', 'COWCODE', 'GWCODE')
 panel <- NULL
 
 for(ii in 1:length(date)){
-	if(years[ii]==2012){
-		codesYear <- attributes(cshp(date=as.Date('2012-6-30'), useGW=TRUE))[['data']][,vars]
+	if(years[ii]==2016){
+		codesYear <- attributes(cshp(date=as.Date('2016-6-30'), useGW=TRUE))[['data']][,vars]
 		panel <- rbind(panel, cbind(codesYear, years[ii])); colnames(panel) <- c(vars, 'year')
 	} else {
 		codesYear <- attributes(cshp(date=as.Date(date[ii]), useGW=TRUE))[['data']][,vars]
