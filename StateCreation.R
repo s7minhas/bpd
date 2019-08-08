@@ -1,12 +1,9 @@
-### THIS FILE IS AN INITIAL ATTEMPT TO CREATE THE FRAME 
-## FOR PANEL DATASETS WHICH TAKE INTO ACCOUNT FORMATION
-## AND BREAKUP OF STATES
-
 rm(list=ls())
 
 setwd('~/Research/bpd')
-require(cshapes)
-require(countrycode)
+library(cshapes)
+library(countrycode)
+library(magrittr)
 
 years <- seq(1960,2016,1)
 date <- paste(years, '-12-31', sep='')
@@ -42,7 +39,11 @@ panel$ccode <- panel$GWCODE
 	panel[panel$CNTRY_NAME=="Yemen People's Republic",'cname'] <- 'S. YEMEN'	
 
 	# Yugoslavia Issues
-	panel[panel$CNTRY_NAME=='Yugoslavia'|panel$CNTRY_NAME=='Serbia'|panel$CNTRY_NAME=='Serbia and Montenegro'|panel$CNTRY_NAME=='Montenegro',]
+	panel[
+		panel$CNTRY_NAME=='Yugoslavia'|
+		panel$CNTRY_NAME=='Serbia'|
+		panel$CNTRY_NAME=='Serbia and Montenegro'|
+		panel$CNTRY_NAME=='Montenegro',]
 	# Equating Serbia with Yugoslavia
 	panel[panel$CNTRY_NAME=='Serbia', 'ccode'] <- 345
 	panel[panel$cname=='Yugoslavia', 'cname'] <- 'SERBIA'
@@ -59,10 +60,25 @@ unique(panel[panel$COWCODE != panel$GWCODE,'CNTRY_NAME'])
 ############################################################
 
 ############################################################
+# assume 2017-2019 = 2016
+yrs = 2017:2019
+toAdd = lapply(yrs, function(yr){
+	p = panel[panel$year==2016,]
+	p$year = yr
+	return(p) }) %>%
+	do.call('rbind', .)
+
+# add to panel
+panel = rbind(panel, toAdd)
+############################################################
+
+############################################################
 # cntry-year identifier
 panel$ccodeYear <- paste(panel$ccode, panel$year, sep='')
 panel$cnameYear <- paste(panel$cname, panel$year, sep='')
+############################################################
 
+############################################################
 # saving dataframe to datafolder
 save(panel, file='panel.rda')
 ############################################################
