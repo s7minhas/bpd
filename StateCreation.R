@@ -1,11 +1,13 @@
 rm(list=ls())
 
-setwd('~/Research/bpd')
+setwd('C:/Users/Owner/Research/bpd')
 library(cshapes)
 library(countrycode)
 library(magrittr)
+library(doParallel)
+library(foreach)
 
-years <- seq(1960,2016,1)
+years <- seq(1946,2016,1)
 date <- paste(years, '-12-31', sep='')
 
 # Constructing data with GW and COW codes
@@ -13,14 +15,22 @@ date <- paste(years, '-12-31', sep='')
 vars <- c('CNTRY_NAME', 'COWCODE', 'GWCODE')
 panel <- NULL
 
-for(ii in 1:length(date)){
+cl = makeCluster(20)
+registerDoParallel(cl)
+panel = foreach(ii = 1:length(date), .packages=c('cshapes')) %dopar% {
 	if(years[ii]==2016){
 		codesYear <- attributes(cshp(date=as.Date('2016-6-30'), useGW=TRUE))[['data']][,vars]
-		panel <- rbind(panel, cbind(codesYear, years[ii])); colnames(panel) <- c(vars, 'year')
+		out = cbind(codesYear, year=years[ii])
 	} else {
 		codesYear <- attributes(cshp(date=as.Date(date[ii]), useGW=TRUE))[['data']][,vars]
-		panel <- rbind(panel, cbind(codesYear, years[ii])) } 
-	if(ii==1 | ii%%10==0 | ii==length(date)){print(date[ii])} }
+		out = cbind(codesYear, year=years[ii])
+	}
+}
+stopCluster(cl)
+
+# org
+panel = do.call('rbind', panel)
+panel = data.frame(panel, stringsAsFactors=FALSE)
 
 # Modifications
 panel$CNTRY_NAME <- as.character(panel$CNTRY_NAME)
@@ -36,7 +46,7 @@ panel$ccode <- panel$GWCODE
 	# Yemen
 	yem <- c("Yemen Arab Republic", "Yemen People's Republic", "Yemen")
 	panel[which(panel$CNTRY_NAME %in% yem),]
-	panel[panel$CNTRY_NAME=="Yemen People's Republic",'cname'] <- 'S. YEMEN'	
+	panel[panel$CNTRY_NAME=="Yemen People's Republic",'cname'] <- 'S. YEMEN'
 
 	# Yugoslavia Issues
 	panel[
@@ -53,10 +63,10 @@ panel$ccode <- panel$GWCODE
 	panel[panel$cname=='Czechoslovakia', 'cname'] <- 'CZECH REPUBLIC'
 
 	# Vietnam
-	panel[panel$CNTRY_NAME=='Republic of Vietnam','cname'] <- 'S. VIETNAM'	
+	panel[panel$CNTRY_NAME=='Republic of Vietnam','cname'] <- 'S. VIETNAM'
 
 # Discrepancies between COWCODE and GWCODEs
-unique(panel[panel$COWCODE != panel$GWCODE,'CNTRY_NAME'])
+unique(panel[panel$COWCODE != panel$GWCODE,'CNTRY_NAME']) %>% cbind()
 ############################################################
 
 ############################################################
